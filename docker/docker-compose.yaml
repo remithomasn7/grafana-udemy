@@ -11,8 +11,10 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
+    user: "1000:1000"
     volumes:
       - ./shared/prometheus:/etc/prometheus
+      - ./shared/prometheus/data:/prometheus
     ports:
       - "9090:9090"
     entrypoint: sh -c "wget --no-check-certificate -O /etc/prometheus/prometheus-local.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/prometheus/prometheus.yml && exec /bin/prometheus --config.file=/etc/prometheus/prometheus-local.yml --web.enable-remote-write-receiver"
@@ -48,6 +50,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
+    user: "1000:1000"
     volumes:
       - ./shared/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources
     environment:
