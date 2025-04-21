@@ -7,17 +7,16 @@ services:
       - ./tempo-data:/var/tempo
     ports:
       - "3200:3200"  # otlp http
-    entrypoint: sh -c "wget --no-check-certificate -O /etc/tempo.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/tempo/tempo.yml && exec /tempo -config.file=/etc/tempo.yml"
+    entrypoint: sh -c "exec /tempo -config.file=/etc/tempo.yml"
 
   prometheus:
     image: prom/prometheus:latest
-    user: "1000:1000"
     volumes:
       - ./shared/prometheus:/etc/prometheus
-      - ./shared/prometheus/data:/prometheus
+      - prometheus-data:/prometheus
     ports:
       - "9090:9090"
-    entrypoint: sh -c "wget --no-check-certificate -O /etc/prometheus/prometheus-local.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/prometheus/prometheus.yml && exec /bin/prometheus --config.file=/etc/prometheus/prometheus-local.yml --web.enable-remote-write-receiver"
+    entrypoint: sh -c "exec /bin/prometheus --config.file=/etc/prometheus/prometheus-local.yml --web.enable-remote-write-receiver"
 
   loki:
     image: grafana/loki:latest
@@ -32,7 +31,8 @@ services:
   promtail:
     image: grafana/promtail:latest
     command:
-      - "-config.file=/etc/promtail/config.yml"   
+      - "-config.file=/etc/promtail/config.yml"
+    volumes:  
       - ./shared/logs:/var/log   
     depends_on:
       - loki   
@@ -46,11 +46,10 @@ services:
     ports:
       - "4317:4317"  
       - "4318:4318"  
-    entrypoint: sh -c "apt-get update -y && apt-get -y install wget && wget --no-check-certificate -O /etc/alloy/config.alloy https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/alloy/config.alloy && exec /bin/alloy run /etc/alloy/config.alloy"
+    entrypoint: sh -c "exec /bin/alloy run /etc/alloy/config.alloy"
 
   grafana:
     image: grafana/grafana:latest
-    user: "1000:1000"
     volumes:
       - ./shared/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources
     environment:
@@ -60,7 +59,7 @@ services:
       - GF_HTTP_TLS_SKIP_VERIFY=true
     ports:
       - "3000:3000"
-    entrypoint: sh -c "wget --no-check-certificate -O /etc/grafana/provisioning/datasources/datasources.yml https://raw.githubusercontent.com/aussiearef/grafana-udemy/main/grafana/datasources.yml && exec sh /run.sh"
+    entrypoint: sh -c "exec sh /run.sh"
 
   shoehub:
     image: aussiearef/shoehub
@@ -83,12 +82,7 @@ services:
     image: aussiearef/stimulator
     depends_on:
       - orderservice
-      - paymentservice 
-
-  
-
-
+      - paymentservice
 
 volumes:
   prometheus-data:
-  tempo-data:
