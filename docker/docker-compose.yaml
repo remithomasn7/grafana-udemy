@@ -4,7 +4,7 @@ services:
     image: grafana/tempo:latest
     volumes:
       - ./shared/tempo:/etc
-      - ./tempo-data:/var/tempo
+      - tempo-data:/var/tempo
     ports:
       - "3200:3200"  # otlp http
     entrypoint: sh -c "exec /tempo -config.file=/etc/tempo.yml"
@@ -51,7 +51,9 @@ services:
   grafana:
     image: grafana/grafana:latest
     volumes:
-      - ./shared/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources
+      - ./shared/grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources/
+      - ./shared/grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/
+      - ./shared/grafana/dashboards/:/var/lib/grafana/dashboards/
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
@@ -86,3 +88,4 @@ services:
 
 volumes:
   prometheus-data:
+  tempo-data:
