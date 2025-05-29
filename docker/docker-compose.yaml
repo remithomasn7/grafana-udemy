@@ -20,22 +20,23 @@ services:
 
   loki:
     image: grafana/loki:latest
-    command:
-      - "-config.file=/etc/loki/local-config.yaml"  
     volumes:
       - ./shared/loki/chunks:/loki/chunks/
       - ./shared/loki/rules:/loki/rules/
     ports:
       - "3100:3100"
+    command:
+      - "-config.file=/etc/loki/local-config.yaml"
 
   promtail:
     image: grafana/promtail:latest
+    depends_on:
+      - loki
+    volumes:
+      - ./shared/logs:/var/log
     command:
       - "-config.file=/etc/promtail/config.yml"
-    volumes:  
-      - ./shared/logs:/var/log   
-    depends_on:
-      - loki   
+
 
   alloy:
     image: grafana/alloy:latest  
@@ -67,24 +68,42 @@ services:
     image: aussiearef/shoehub
     ports:
       - "8001:8080"
+    environment:
+      - LOG_PATH=/app/logs/log.txt
+    volumes:
+    - ./shared/logs/shoehub:/app/logs:rw
+    depends_on:
+      - loki
+      - prometheus
 
   orderservice:
     image: aussiearef/orderservice
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
     depends_on:
-      - paymentservice 
-  
+      - paymentservice
+      - alloy
+
   paymentservice:
     image: aussiearef/paymentservice
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-  
+    depends_on:
+      - alloy
+
   stimulator:
     image: aussiearef/stimulator
     depends_on:
       - orderservice
       - paymentservice
+
+  logator:
+    build:
+      context: ../logator
+      dockerfile: Dockerfile
+    container_name: logator
+    volumes:
+    - ./shared/logs/logator:/var/log:rw
+    depends_on:
+      - loki
+      - prometheus
+    restart: unless-stopped
 
 volumes:
   prometheus-data:
